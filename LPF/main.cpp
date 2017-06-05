@@ -15,30 +15,48 @@
 
 using namespace std;
 
+// define the kernel
+const float Kernel[3][3] = {
+    {1/9.0, 1/9.0, 1/9.0},
+    {1/9.0, 1/9.0, 1/9.0},
+    {1/9.0, 1/9.0, 1/9.0}
+};
+
 int main(int argc, const char * argv[])
 {
-    //reference : https://blog.unasuke.com/2013/opencv-testprogram-on-xcode/
+    IplImage* loadImg = cvLoadImage("/Users/AtsuyaSato/Desktop/LPF/lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    if(loadImg == NULL) return 0;
+    
+    cv::Mat mat(loadImg);  //copy constructor
 
-    //画像を開く
-    IplImage* before_img = cvLoadImage("/Users/AtsuyaSato/Desktop/LPF/lena.jpg", CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR );
-    if( before_img == NULL )
-    {
-        return 0;
+    cv::Mat src = loadImg; //source
+    cv::Mat dst = src.clone(); // destination
+    
+    //initialize pixel value
+    for(int y = 0; y < src.rows; y++)
+        for(int x = 0; x < src.cols; x++)
+            dst.at<uchar>(y,x) = 0.0;
+    
+    float sum;
+    for(int y = 1; y < src.rows - 1; y++){
+        for(int x = 1; x < src.cols - 1; x++){
+            sum = 0.0;
+            for(int k = -1; k <= 1;k++){
+                for(int j = -1; j <=1; j++){
+                    sum = sum + Kernel[j+1][k+1] * src.at<uchar>(y - j, x - k);
+                }
+            }
+            dst.at<uchar>(y,x) = sum;
+        }
     }
     
     //ウィンドウの作成
-    //cvNamedWindow("test-before", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("test-after" , CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("lpf" , CV_WINDOW_AUTOSIZE);
     
-    //画像変換のためIplImage型で宣言
-    IplImage* after_img = cvCreateImage(cvGetSize(before_img), before_img->depth, before_img->nChannels);
-    
-    //ガウシアンフィルタを使って画像をぼかす
-    cvSmooth(before_img, after_img, CV_GAUSSIAN , 9);
-    
+    IplImage iplImage = dst; // convert type
+
     //画像をウィンドウに表示
-    //cvShowImage("test-before", before_img);
-    cvShowImage("test-after", after_img);
+    cvShowImage("lpf", &iplImage);
     
     //キーの入力待ち
     cvWaitKey();
@@ -47,8 +65,7 @@ int main(int argc, const char * argv[])
     cvDestroyAllWindows();
     
     //画像データの開放
-    cvReleaseImage(&before_img);
-    cvReleaseImage(&after_img);
+    cvReleaseImage(&loadImg);
     
     return 0;
 }
