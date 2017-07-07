@@ -58,8 +58,12 @@ Mat createGaussianLowPassFilter(Mat complex){
 
 int main(int argc, char** argv)
 {
+    if(argc < 2) return -1;
+    
     // Load an image
-    Mat inputImage = imread("/Users/AtsuyaSato/Desktop/LPF/lena.jpg", 0);
+    Mat inputImage = imread(argv[1], 0);
+    if(inputImage.empty()) return -1;
+    
     imshow("inputImage",inputImage);
     
     //expand input image to optimal size
